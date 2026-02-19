@@ -26,7 +26,9 @@ const sampleMessages = [
     <header class="chat-header">
       <div class="chat-header-inner">
         <div class="logo-placeholder">
-          <div class="logo-icon">K</div>
+          <div class="logo-icon">
+            K
+          </div>
           <span class="logo-text">Kitte</span>
         </div>
       </div>
@@ -46,7 +48,10 @@ const sampleMessages = [
             v-if="msg.role === 'assistant'"
             class="avatar avatar-assistant"
           >
-            <UIcon name="i-lucide-bot" class="avatar-icon" />
+            <UIcon
+              name="i-lucide-bot"
+              class="avatar-icon"
+            />
           </div>
 
           <!-- Bubble -->
@@ -62,7 +67,10 @@ const sampleMessages = [
             v-if="msg.role === 'user'"
             class="avatar avatar-user"
           >
-            <UIcon name="i-lucide-user" class="avatar-icon" />
+            <UIcon
+              name="i-lucide-user"
+              class="avatar-icon"
+            />
           </div>
         </div>
       </div>
