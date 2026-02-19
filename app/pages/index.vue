@@ -1,21 +1,79 @@
 <script setup lang="ts">
+interface TextMessage {
+  id: number
+  role: 'user' | 'assistant'
+  type: 'text'
+  content: string
+}
+
+interface CandidateMessage {
+  id: number
+  role: 'assistant'
+  type: 'candidate'
+  signpost: string
+  candidate: {
+    name: string
+    canton: string
+    portrait: string
+    bio: string
+  }
+}
+
+interface PolicyMessage {
+  id: number
+  role: 'assistant'
+  type: 'policy'
+  summary: string
+  paper: {
+    title: string
+    url: string
+  }
+}
+
+type ChatMessage = TextMessage | CandidateMessage | PolicyMessage
+
 const message = ref('')
 
-const sampleMessages = [
+const sampleMessages: ChatMessage[] = [
   {
     id: 1,
-    role: 'assistant' as const,
-    content: 'Hello! 👋 I\'m Kitte, your AI assistant. How can I help you today?'
+    role: 'assistant',
+    type: 'text',
+    content: 'Hello! 👋 I\'m Kitte, your AI assistant for the upcoming elections. Ask me about our candidates, policies, or anything else you\'d like to know!'
   },
   {
     id: 2,
-    role: 'user' as const,
-    content: 'Tell me about Kitte — what can you do?'
+    role: 'user',
+    type: 'text',
+    content: 'Who is running for the National Council in Zürich?'
   },
   {
     id: 3,
-    role: 'assistant' as const,
-    content: 'I can help you with a wide range of tasks! Whether it\'s answering questions, brainstorming ideas, writing content, or solving problems — I\'m here for you. Just type your question below and let\'s get started! 🚀'
+    role: 'assistant',
+    type: 'candidate',
+    signpost: 'Great question! Here\'s one of our candidates for Canton Zürich:',
+    candidate: {
+      name: 'Laura Meier',
+      canton: 'Zürich',
+      portrait: '/images/candidate.webp',
+      bio: 'Laura Meier is a 42-year-old environmental engineer and city councillor in Winterthur. She has championed sustainable urban development and affordable housing for over a decade. As a mother of two, she is passionate about building a future that works for the next generation.'
+    }
+  },
+  {
+    id: 4,
+    role: 'user',
+    type: 'text',
+    content: 'What is your stance on renewable energy?'
+  },
+  {
+    id: 5,
+    role: 'assistant',
+    type: 'policy',
+    summary: 'We are committed to achieving net-zero emissions by 2040. Our energy policy focuses on massively expanding solar and wind capacity, modernizing the grid, and providing incentives for households and businesses to transition to clean energy. We also advocate for phasing out fossil fuel subsidies and investing in green hydrogen research.',
+    paper: {
+      title: 'Energy Transition Roadmap 2040 — Full Policy Paper',
+      url: '#'
+    }
   }
 ]
 </script>
@@ -43,7 +101,7 @@ const sampleMessages = [
           class="message-row"
           :class="msg.role === 'user' ? 'message-row-user' : 'message-row-assistant'"
         >
-          <!-- Avatar -->
+          <!-- Bot Avatar -->
           <div
             v-if="msg.role === 'assistant'"
             class="avatar avatar-assistant"
@@ -54,12 +112,70 @@ const sampleMessages = [
             />
           </div>
 
-          <!-- Bubble -->
+          <!-- Plain text bubble -->
           <div
+            v-if="msg.type === 'text'"
             class="message-bubble"
             :class="msg.role === 'user' ? 'bubble-user' : 'bubble-assistant'"
           >
             {{ msg.content }}
+          </div>
+
+          <!-- Candidate card -->
+          <div
+            v-else-if="msg.type === 'candidate'"
+            class="message-bubble bubble-assistant bubble-rich"
+          >
+            <p class="signpost-text">
+              {{ msg.signpost }}
+            </p>
+            <div class="candidate-card">
+              <img
+                :src="msg.candidate.portrait"
+                :alt="msg.candidate.name"
+                class="candidate-photo"
+              >
+              <div class="candidate-info">
+                <h3 class="candidate-name">
+                  {{ msg.candidate.name }}
+                </h3>
+                <span class="candidate-canton">
+                  <UIcon
+                    name="i-lucide-map-pin"
+                    class="canton-icon"
+                  />
+                  Canton {{ msg.candidate.canton }}
+                </span>
+                <p class="candidate-bio">
+                  {{ msg.candidate.bio }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Policy card -->
+          <div
+            v-else-if="msg.type === 'policy'"
+            class="message-bubble bubble-assistant bubble-rich"
+          >
+            <p class="policy-summary">
+              {{ msg.summary }}
+            </p>
+            <a
+              :href="msg.paper.url"
+              class="policy-link"
+              target="_blank"
+            >
+              <UIcon
+                name="i-lucide-file-text"
+                class="policy-link-icon"
+              />
+              <span>{{ msg.paper.title }}</span>
+              <UIcon
+                name="i-lucide-external-link"
+                class="policy-link-external"
+              />
+            </a>
           </div>
 
           <!-- User avatar -->
@@ -230,6 +346,108 @@ const sampleMessages = [
   border-bottom-right-radius: 0.25rem;
 }
 
+.bubble-rich {
+  max-width: 85%;
+  padding: 1rem;
+}
+
+/* ───── Candidate card ───── */
+.signpost-text {
+  margin-bottom: 0.75rem;
+  font-size: 0.9375rem;
+}
+
+.candidate-card {
+  display: flex;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+
+.candidate-photo {
+  width: 7rem;
+  align-self: stretch;
+  object-fit: cover;
+  object-position: top;
+  flex-shrink: 0;
+}
+
+.candidate-info {
+  padding: 0.75rem 1rem;
+}
+
+.candidate-name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+}
+
+.candidate-canton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  opacity: 0.85;
+  margin-bottom: 0.5rem;
+}
+
+.canton-icon {
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.candidate-bio {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* ───── Policy card ───── */
+.policy-summary {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.policy-link {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  color: white;
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  transition: background 0.2s;
+  backdrop-filter: blur(8px);
+}
+
+.policy-link:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.policy-link-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  flex: 0 0 auto;
+}
+
+.policy-link span {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.policy-link-external {
+  width: 0.625rem;
+  height: 0.625rem;
+  flex: 0 0 auto;
+  opacity: 0.7;
+}
+
 /* ───── Input bar ───── */
 .chat-input-bar {
   flex-shrink: 0;
@@ -263,6 +481,14 @@ const sampleMessages = [
   .message-bubble {
     max-width: 85%;
     font-size: 0.875rem;
+  }
+
+  .bubble-rich {
+    max-width: 92%;
+  }
+
+  .candidate-photo {
+    aspect-ratio: 1;
   }
 
   .chat-header-inner,
